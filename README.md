@@ -2,6 +2,9 @@
 
 OakMQ is a lean, hardened message broker supporting OpenWire and STOMP.  OakMQ is not affiliated with Apache ActiveMQ.
 
+NOTE: OakMQ is under development and is non-functional at this time. Use at your own risk.
+
+
 ## Project goals
 
 ### 1. Minimal footprint
