@@ -1,75 +1,53 @@
-Welcome to Apache ActiveMQ 
+Welcome to OakMQ 
 =======================================================================
-Apache ActiveMQ is a high performance Apache 2.0 licensed
-Message Broker.
-ActiveMQ supports several API and protocols:
-- Jakarta Messaging 3.1.0, JMS 2.0 and JMS 1.1.
-- AMQP
-- MQTT
-- HTTP/WS
+OakMQ is a hardened fork of Apache ActiveMQ.  OakMQ is not affiliated with Apache ActiveMQ.
 
-ActiveMQ also provides advanced features like:
-- network of brokers
-- scheduling
-- and much more!
+The goals of OakMQ
 
-Getting Started
-===============
-To help you get started, try the following links:
+Minimal footprint
+Remove optional modules, protocols, examples, web consoles, and unused dependencies.
 
-Getting Started
-- You need JDK17+ to run Apache ActiveMQ
-- After having extracted ActiveMQ binary distribution, you can start ActiveMQ with `./bin/activemq console` (foreground) or `./bin/activemq start`
-- Docker images are also available on Docker Hub (https://hub.docker.com/r/apache/activemq-classic)
+OpenWire and STOMP support
+Provide reliable interoperability for existing OpenWire and STOMP clients.
 
-Building
-- You can build (fast) using Apache Maven: `mvn clean install -DskipTests`
-- You can build (including all tests) using Apache Maven: `mvn clean install`
+Secure by default
+Require authentication, disable unsafe defaults, minimize exposed services, and use modern TLS configuration.
 
-Examples
-- https://activemq.apache.org/examples.html
+Reduced attack surface
+Include only the components necessary to operate the broker.
 
-We welcome contributions of all kinds, for details of how you can help
-https://activemq.apache.org/contributing.html
+Compliance readiness
+Support hardened deployments, Iron Bank submission requirements, STIG-aligned configuration, and documented security controls.
 
-Please refer to the website for details of finding the issue tracker, 
-email lists, wiki or IRC channel at https://activemq.apache.org/
+Transparent dependencies
+Maintain a complete software bill of materials, dependency inventory, license report, and vulnerability record.
 
-Please help us make Apache ActiveMQ better - we appreciate any feedback 
-you may have.
+Reproducible builds
+Produce traceable artifacts from pinned source code and dependencies using repeatable build processes.
 
-Enjoy!
+Minimal container image
+Publish a non-root OCI image containing only the runtime and required OakMQ components.
 
-Licensing
-=======================================================================
+Continuous security verification
+Run static analysis, dependency scanning, container scanning, secret detection, and automated tests in CI.
 
-   This software is licensed under the terms you may find in the file 
-   named "[LICENSE](./LICENSE)" in this directory.
+Reliable messaging
+Preserve durable queues, topics, acknowledgements, transactions, persistence, redelivery, and dead-letter handling.
 
-   This distribution includes cryptographic software.  The country in 
-   which you currently reside may have restrictions on the import, 
-   possession, use, and/or re-export to another country, of 
-   encryption software.  BEFORE using any encryption software, please 
-   check your country's laws, regulations and policies concerning the
-   import, possession, or use, and re-export of encryption software, to 
-   see if this is permitted.  See <https://www.wassenaar.org/> for more
-   information.
+Operational simplicity
+Make configuration, deployment, monitoring, backup, and upgrades straightforward.
 
-   The U.S. Government Department of Commerce, Bureau of Industry and
-   Security (BIS), has classified this software as Export Commodity 
-   Control Number (ECCN) 5D002.C.1, which includes information security
-   software using or performing cryptographic functions with asymmetric
-   algorithms.  The form and manner of this Apache Software Foundation
-   distribution makes it eligible for export under the License Exception
-   ENC Technology Software Unrestricted (TSU) exception (see the BIS 
-   Export Administration Regulations, Section 740.13) for both object 
-   code and source code.
+Observable operation
+Provide health checks, structured logs, metrics, and audit-relevant events without requiring a web console.
 
-   The following provides more details on the included cryptographic
-   software:
-   
-   ActiveMQ supports the use of SSL TCP connections when used with 
-   with a JVM supporting the Java Cryptography extensions
-   <https://www.oracle.com/java/technologies/javase/javase-tech-security.html>.
-   ActiveMQ does not include these libraries itself, but is designed to use them.
+Compatibility with existing clients
+Avoid unnecessary protocol changes and clearly document compatibility with supported ActiveMQ client versions.
 
+Predictable performance
+Establish repeatable benchmarks for startup time, memory consumption, latency, and throughput.
+
+Responsible upstream maintenance
+Track Apache ActiveMQ security fixes, preserve license and attribution requirements, and contribute generally useful fixes upstream when practical.
+
+Clear project identity
+Operate as an independent Apache-licensed project without implying endorsement by the Apache Software Foundation.
