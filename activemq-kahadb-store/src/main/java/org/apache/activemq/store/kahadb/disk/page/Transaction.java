@@ -230,9 +230,10 @@ public class Transaction implements Iterable<Page> {
             // ensure free page is visible while write is pending
             pageFile.addToCache(page.copy());
 
-            DataByteArrayOutputStream out = new DataByteArrayOutputStream(pageFile.getPageSize());
-            page.write(out);
-            write(page, out.getData());
+            try (DataByteArrayOutputStream out = new DataByteArrayOutputStream(pageFile.getPageSize())) {
+                page.write(out);
+                write(page, out.getData());
+            }
 
             freeList.add(page.getPageId());
             page = next;

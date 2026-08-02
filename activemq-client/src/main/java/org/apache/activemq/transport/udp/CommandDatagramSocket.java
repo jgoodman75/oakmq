@@ -90,97 +90,97 @@ public class CommandDatagramSocket extends CommandChannelSupport {
         return answer;
     }
 
-    public void write(Command command, SocketAddress address) throws IOException {
-        synchronized (writeLock) {
+  public void write(Command command, SocketAddress address) throws IOException {
+    synchronized (writeLock) {
+      try (ByteArrayOutputStream writeBuffer = createByteArrayOutputStream();
+           DataOutputStream dataOut = new DataOutputStream(writeBuffer)) {
+        headerMarshaller.writeHeader(command, dataOut);
 
-            ByteArrayOutputStream writeBuffer = createByteArrayOutputStream();
-            DataOutputStream dataOut = new DataOutputStream(writeBuffer);
-            headerMarshaller.writeHeader(command, dataOut);
+        int offset = writeBuffer.size();
+        wireFormat.marshal(command, dataOut);
 
-            int offset = writeBuffer.size();
+        if (remaining(writeBuffer) >= 0) {
+          sendWriteBuffer(address, writeBuffer, command.getCommandId());
+        } else {
+          // lets split the command up into chunks
+          byte[] data = writeBuffer.toByteArray();
+          boolean lastFragment = false;
+          int length = data.length;
+          for (int fragment = 0; !lastFragment; fragment++) {
+            try (ByteArrayOutputStream fragmentBuffer = createByteArrayOutputStream();
+                 DataOutputStream fragmentOut = new DataOutputStream(fragmentBuffer)) {
+              headerMarshaller.writeHeader(command, fragmentOut);
 
-            wireFormat.marshal(command, dataOut);
+              int chunkSize = remaining(fragmentBuffer);
 
-            if (remaining(writeBuffer) >= 0) {
-                sendWriteBuffer(address, writeBuffer, command.getCommandId());
-            } else {
-                // lets split the command up into chunks
-                byte[] data = writeBuffer.toByteArray();
-                boolean lastFragment = false;
-                int length = data.length;
-                for (int fragment = 0; !lastFragment; fragment++) {
-                    writeBuffer = createByteArrayOutputStream();
-                    headerMarshaller.writeHeader(command, dataOut);
+              // we need to remove the amount of overhead to write the
+              // partial command
 
-                    int chunkSize = remaining(writeBuffer);
+              // lets write the flags in there
+              BooleanStream bs = null;
+              if (wireFormat.isTightEncodingEnabled()) {
+                bs = new BooleanStream();
+                bs.writeBoolean(true); // the partial data byte[] is never null
+              }
 
-                    // we need to remove the amount of overhead to write the
-                    // partial command
+              // lets remove the header of the partial command
+              // which is the byte for the type and an int for the size of
+              // the byte[]
 
-                    // lets write the flags in there
-                    BooleanStream bs = null;
-                    if (wireFormat.isTightEncodingEnabled()) {
-                        bs = new BooleanStream();
-                        bs.writeBoolean(true); // the partial data byte[] is
-                        // never null
-                    }
+              // data type + the command ID + size of the partial data
+              chunkSize -= 1 + 4 + 4;
 
-                    // lets remove the header of the partial command
-                    // which is the byte for the type and an int for the size of
-                    // the byte[]
+              // the boolean flags
+              if (bs != null) {
+                chunkSize -= bs.marshalledSize();
+              } else {
+                chunkSize -= 1;
+              }
 
-                    // data type + the command ID + size of the partial data
-                    chunkSize -= 1 + 4 + 4;
+              if (!wireFormat.isSizePrefixDisabled()) {
+                // lets write the size of the command buffer
+                fragmentOut.writeInt(chunkSize);
+                chunkSize -= 4;
+              }
 
-                    // the boolean flags
-                    if (bs != null) {
-                        chunkSize -= bs.marshalledSize();
-                    } else {
-                        chunkSize -= 1;
-                    }
+              lastFragment = offset + chunkSize >= length;
+              if (chunkSize + offset > length) {
+                chunkSize = length - offset;
+              }
 
-                    if (!wireFormat.isSizePrefixDisabled()) {
-                        // lets write the size of the command buffer
-                        dataOut.writeInt(chunkSize);
-                        chunkSize -= 4;
-                    }
+              if (lastFragment) {
+                fragmentOut.write(LastPartialCommand.DATA_STRUCTURE_TYPE);
+              } else {
+                fragmentOut.write(PartialCommand.DATA_STRUCTURE_TYPE);
+              }
 
-                    lastFragment = offset + chunkSize >= length;
-                    if (chunkSize + offset > length) {
-                        chunkSize = length - offset;
-                    }
+              if (bs != null) {
+                bs.marshal(fragmentOut);
+              }
 
-                    if (lastFragment) {
-                        dataOut.write(LastPartialCommand.DATA_STRUCTURE_TYPE);
-                    } else {
-                        dataOut.write(PartialCommand.DATA_STRUCTURE_TYPE);
-                    }
+              int commandId = command.getCommandId();
+              if (fragment > 0) {
+                commandId = sequenceGenerator.getNextSequenceId();
+              }
+              fragmentOut.writeInt(commandId);
+              if (bs == null) {
+                fragmentOut.write((byte)1);
+              }
 
-                    if (bs != null) {
-                        bs.marshal(dataOut);
-                    }
+              // size of byte array
+              fragmentOut.writeInt(chunkSize);
 
-                    int commandId = command.getCommandId();
-                    if (fragment > 0) {
-                        commandId = sequenceGenerator.getNextSequenceId();
-                    }
-                    dataOut.writeInt(commandId);
-                    if (bs == null) {
-                        dataOut.write((byte)1);
-                    }
+              // now the data
+              fragmentOut.write(data, offset, chunkSize);
 
-                    // size of byte array
-                    dataOut.writeInt(chunkSize);
-
-                    // now the data
-                    dataOut.write(data, offset, chunkSize);
-
-                    offset += chunkSize;
-                    sendWriteBuffer(address, writeBuffer, commandId);
-                }
+              offset += chunkSize;
+              sendWriteBuffer(address, fragmentBuffer, commandId);
             }
+          }
         }
+      }
     }
+  }
 
     public int getDatagramSize() {
         return datagramSize;

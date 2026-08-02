@@ -211,29 +211,28 @@ public class StompWireFormat implements WireFormat {
                 StandardCharsets.UTF_8).trim();
     }
 
-    private ByteSequence readHeaderLine(DataInput in, int maxLength, String errorMessage) throws IOException {
-        byte b;
-        ByteArrayOutputStream baos = new ByteArrayOutputStream(maxLength);
-        while ((b = in.readByte()) != '\n') {
-            if (baos.size() > maxLength) {
-                baos.close();
-                throw new ProtocolException(errorMessage, true);
-            }
-            baos.write(b);
+  private ByteSequence readHeaderLine(DataInput in, int maxLength, String errorMessage) throws IOException {
+    byte b;
+    try (ByteArrayOutputStream baos = new ByteArrayOutputStream(maxLength)) {
+      while ((b = in.readByte()) != '\n') {
+        if (baos.size() > maxLength) {
+          throw new ProtocolException(errorMessage, true);
         }
+        baos.write(b);
+      }
 
-        baos.close();
-        ByteSequence line = baos.toByteSequence();
+      ByteSequence line = baos.toByteSequence();
 
-        if (stompVersion.equals(Stomp.V1_0) || stompVersion.equals(Stomp.V1_2)) {
-            int lineLength = line.getLength();
-            if (lineLength > 0 && line.data[lineLength-1] == '\r') {
-                line.setLength(lineLength-1);
-            }
+      if (stompVersion.equals(Stomp.V1_0) || stompVersion.equals(Stomp.V1_2)) {
+        int lineLength = line.getLength();
+        if (lineLength > 0 && line.data[lineLength-1] == '\r') {
+          line.setLength(lineLength-1);
         }
+      }
 
-        return line;
+      return line;
     }
+  }
 
     String parseAction(DataInput in) throws IOException {
         String action = null;

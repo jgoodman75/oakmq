@@ -230,18 +230,19 @@ public class ActiveMQQueueBrowser implements QueueBrowser, Enumeration {
      * Wait on a semaphore for a fixed amount of time for a message to come in.
      * @throws JMSException
      */
-    protected void waitForMessage() {
-        try {
-            consumer.sendPullCommand(-1);
-            synchronized (semaphore) {
-                semaphore.wait(2000);
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        } catch (JMSException e) {
+  protected void waitForMessage() {
+    try {
+      synchronized (semaphore) {
+        consumer.sendPullCommand(-1);
+        while (consumer.getMessageSize() == 0 && !browseDone.get() && session.isRunning()) {
+          semaphore.wait(2000);
         }
-
+      }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    } catch (JMSException e) {
     }
+  }
 
     protected void notifyMessageAvailable() {
         synchronized (semaphore) {

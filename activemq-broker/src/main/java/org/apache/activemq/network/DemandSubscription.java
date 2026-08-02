@@ -121,23 +121,28 @@ public class DemandSubscription {
         return forcedDurableConsumers.size();
     }
 
-    public void waitForCompletion() {
-        if (dispatched.get() > 0) {
-            LOG.debug("Waiting for completion for sub: {}, dispatched: {}", localInfo.getConsumerId(), this.dispatched.get());
-            activeWaiter.set(true);
-            if (dispatched.get() > 0) {
-                synchronized (activeWaiter) {
-                    try {
-                        activeWaiter.wait(TimeUnit.SECONDS.toMillis(30));
-                    } catch (InterruptedException ignored) {
-                    }
-                }
-                if (this.dispatched.get() > 0) {
-                    LOG.warn("demand sub interrupted or timedout while waiting for outstanding responses, expect potentially {} duplicate forwards", this.dispatched.get());
-                }
-            }
+  public void waitForCompletion() {
+    if (dispatched.get() > 0) {
+      LOG.debug("Waiting for completion for sub: {}, dispatched: {}", localInfo.getConsumerId(), this.dispatched.get());
+      long expiry = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(30);
+      synchronized (activeWaiter) {
+        activeWaiter.set(true);
+        long remaining = expiry - System.currentTimeMillis();
+        while (dispatched.get() > 0 && remaining > 0) {
+          try {
+            activeWaiter.wait(remaining);
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            break;
+          }
+          remaining = expiry - System.currentTimeMillis();
         }
+      }
+      if (this.dispatched.get() > 0) {
+        LOG.warn("demand sub interrupted or timedout while waiting for outstanding responses, expect potentially {} duplicate forwards", this.dispatched.get());
+      }
     }
+  }
 
     public void decrementOutstandingResponses() {
         if (dispatched.decrementAndGet() == 0 && activeWaiter.get()) {

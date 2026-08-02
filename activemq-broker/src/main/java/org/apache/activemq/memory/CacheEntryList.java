@@ -35,17 +35,16 @@ public class CacheEntryList {
         addEntryBefore(tail, ce);
     }
 
-    private void addEntryBefore(CacheEntry position, CacheEntry ce) {
-        assert ce.key != null && ce.next == null && ce.owner == null;
-
-        synchronized (tail) {
-            ce.owner = this;
-            ce.next = position;
-            ce.previous = position.previous;
-            ce.previous.next = ce;
-            ce.next.previous = ce;
-        }
+  private void addEntryBefore(CacheEntry position, CacheEntry ce) {
+    synchronized (tail) {
+      assert ce.key != null && ce.next == null && ce.owner == null;
+      ce.owner = this;
+      ce.next = position;
+      ce.previous = position.previous;
+      ce.previous.next = ce;
+      ce.next.previous = ce;
     }
+  }
 
     public void clear() {
         synchronized (tail) {

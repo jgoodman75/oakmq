@@ -120,7 +120,10 @@ public class ReliableTransport extends ResponseCorrelator {
         }
 
         int actualCounter = command.getCommandId();
-        boolean valid = expectedCounter == actualCounter;
+        boolean valid;
+        synchronized (commands) {
+            valid = expectedCounter == actualCounter;
+        }
 
         if (!valid) {
             synchronized (commands) {
@@ -159,8 +162,11 @@ public class ReliableTransport extends ResponseCorrelator {
 
         while (valid) {
             // we've got a valid header so increment counter
-            replayStrategy.onReceivedPacket(this, expectedCounter);
-            expectedCounter++;
+            int receivedCounter;
+            synchronized (commands) {
+                receivedCounter = expectedCounter++;
+            }
+            replayStrategy.onReceivedPacket(this, receivedCounter);
             super.onCommand(command);
 
             synchronized (commands) {
@@ -186,7 +192,9 @@ public class ReliableTransport extends ResponseCorrelator {
     }
 
     public int getExpectedCounter() {
-        return expectedCounter;
+        synchronized (commands) {
+            return expectedCounter;
+        }
     }
 
     /**
@@ -194,7 +202,9 @@ public class ReliableTransport extends ResponseCorrelator {
      * test cases
      */
     public void setExpectedCounter(int expectedCounter) {
-        this.expectedCounter = expectedCounter;
+        synchronized (commands) {
+            this.expectedCounter = expectedCounter;
+        }
     }
 
     public int getRequestTimeout() {

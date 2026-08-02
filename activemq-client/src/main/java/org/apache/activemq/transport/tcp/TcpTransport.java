@@ -38,6 +38,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.net.SocketFactory;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SSLSocket;
 
 import org.apache.activemq.Service;
 import org.apache.activemq.TransportLoggerSupport;
@@ -482,7 +484,16 @@ public class TcpTransport extends TransportThreadSupport implements Transport, S
         if (!this.trafficClassSet) {
             this.trafficClassSet = setTrafficClass(sock);
         }
+        if (sock instanceof SSLSocket && remoteLocation != null && isVerifyHostNameEnabled()) {
+            SSLParameters sslParameters = ((SSLSocket) sock).getSSLParameters();
+            sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
+            ((SSLSocket) sock).setSSLParameters(sslParameters);
+        }
     }
+
+  protected boolean isVerifyHostNameEnabled() {
+    return true;
+  }
 
     @Override
     protected void doStart() throws Exception {

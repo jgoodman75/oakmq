@@ -176,6 +176,11 @@ public class SslTransport extends TcpTransport {
         this.verifyHostName = verifyHostName;
     }
 
+  @Override
+  protected boolean isVerifyHostNameEnabled() {
+    return Boolean.TRUE.equals(verifyHostName);
+  }
+
     /**
      * @return peer certificate chain associated with the ssl socket
      */

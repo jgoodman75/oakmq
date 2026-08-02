@@ -1607,33 +1607,38 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
         return result;
     }
 
-    private ProducerBrokerExchange getProducerBrokerExchange(ProducerId id) throws IOException {
-        ProducerBrokerExchange result = producerExchanges.get(id);
-        if (result == null) {
-            synchronized (producerExchanges) {
-                result = new ProducerBrokerExchange();
-                TransportConnectionState state = lookupConnectionState(id);
-                context = state.getContext();
-                result.setConnectionContext(context);
-                if (context.isReconnect() || (context.isNetworkConnection() && connector.isAuditNetworkProducers())) {
-                    result.setLastStoredSequenceId(brokerService.getPersistenceAdapter().getLastProducerSequenceId(id));
-                }
-                SessionState ss = state.getSessionState(id.getParentId());
-                if (ss != null) {
-                    result.setProducerState(ss.getProducerState(id));
-                    ProducerState producerState = ss.getProducerState(id);
-                    if (producerState != null && producerState.getInfo() != null) {
-                        ProducerInfo info = producerState.getInfo();
-                        result.setMutable(info.getDestination() == null || info.getDestination().isComposite());
-                    }
-                }
-                producerExchanges.put(id, result);
-            }
-        } else {
-            context = result.getConnectionContext();
-        }
-        return result;
+  private ProducerBrokerExchange getProducerBrokerExchange(ProducerId id) throws IOException {
+    ProducerBrokerExchange result;
+    synchronized (producerExchanges) {
+      result = producerExchanges.get(id);
     }
+    if (result == null) {
+      TransportConnectionState state = lookupConnectionState(id);
+      synchronized (producerExchanges) {
+        result = producerExchanges.get(id);
+        if (result == null) {
+          result = new ProducerBrokerExchange();
+          context = state.getContext();
+          result.setConnectionContext(context);
+          if (context.isReconnect() || (context.isNetworkConnection() && connector.isAuditNetworkProducers())) {
+            result.setLastStoredSequenceId(brokerService.getPersistenceAdapter().getLastProducerSequenceId(id));
+          }
+          SessionState ss = state.getSessionState(id.getParentId());
+          if (ss != null) {
+            result.setProducerState(ss.getProducerState(id));
+            ProducerState producerState = ss.getProducerState(id);
+            if (producerState != null && producerState.getInfo() != null) {
+              ProducerInfo info = producerState.getInfo();
+              result.setMutable(info.getDestination() == null || info.getDestination().isComposite());
+            }
+          }
+          producerExchanges.put(id, result);
+        }
+      }
+    }
+    context = result.getConnectionContext();
+    return result;
+  }
 
     private void removeProducerBrokerExchange(ProducerId id) {
         synchronized (producerExchanges) {

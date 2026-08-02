@@ -33,22 +33,25 @@ public class CacheEntry {
     /**
      * @return false if you are trying to remove the tail pointer.
      */
-    public boolean remove() {
-
-        // Cannot remove if this is a tail pointer.
-        // Or not linked.
-        if (owner == null || this.key == null || this.next == null) {
-            return false;
-        }
-
-        synchronized (owner.tail) {
-            this.next.previous = this.previous;
-            this.previous.next = this.next;
-            this.owner = null;
-            this.next = null;
-            this.previous = null;
-        }
-
-        return true;
+  public boolean remove() {
+    CacheEntryList currentOwner = owner;
+    if (currentOwner == null) {
+      return false;
     }
+
+    synchronized (currentOwner.tail) {
+      // Cannot remove if this is a tail pointer, is not linked, or was removed
+      // while waiting to acquire the owning list's lock.
+      if (owner != currentOwner || this.key == null || this.next == null) {
+        return false;
+      }
+      this.next.previous = this.previous;
+      this.previous.next = this.next;
+      this.owner = null;
+      this.next = null;
+      this.previous = null;
+    }
+
+    return true;
+  }
 }

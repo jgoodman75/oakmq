@@ -178,36 +178,34 @@ abstract public class BaseMessage<T> implements Message<T> {
         return rc;
     }
 
-    public T mergeUnframed(Buffer data) throws InvalidProtocolBufferException {
-        try {
-            CodedInputStream input = new CodedInputStream(data);
-            mergeUnframed(input);
-            input.checkLastTagWas(0);
-            return getThis();
-        } catch (InvalidProtocolBufferException e) {
-            throw e;
-        } catch (IOException e) {
-            throw new RuntimeException("An IOException was thrown (should never happen in this method).", e);
-        }
+  public T mergeUnframed(Buffer data) throws InvalidProtocolBufferException {
+    try (CodedInputStream input = new CodedInputStream(data)) {
+      mergeUnframed(input);
+      input.checkLastTagWas(0);
+      return getThis();
+    } catch (InvalidProtocolBufferException e) {
+      throw e;
+    } catch (IOException e) {
+      throw new RuntimeException("An IOException was thrown (should never happen in this method).", e);
     }
+  }
 
     @SuppressWarnings("unchecked")
     private T getThis() {
         return (T) this;
     }
 
-    public T mergeFramed(Buffer data) throws InvalidProtocolBufferException {
-        try {
-            CodedInputStream input = new CodedInputStream(data);
-            mergeFramed(input);
-            input.checkLastTagWas(0);
-            return getThis();
-        } catch (InvalidProtocolBufferException e) {
-            throw e;
-        } catch (IOException e) {
-            throw new RuntimeException("An IOException was thrown (should never happen in this method).", e);
-        }
+  public T mergeFramed(Buffer data) throws InvalidProtocolBufferException {
+    try (CodedInputStream input = new CodedInputStream(data)) {
+      mergeFramed(input);
+      input.checkLastTagWas(0);
+      return getThis();
+    } catch (InvalidProtocolBufferException e) {
+      throw e;
+    } catch (IOException e) {
+      throw new RuntimeException("An IOException was thrown (should never happen in this method).", e);
     }
+  }
 
     public T mergeUnframed(byte[] data) throws InvalidProtocolBufferException {
         return mergeUnframed(new Buffer(data));

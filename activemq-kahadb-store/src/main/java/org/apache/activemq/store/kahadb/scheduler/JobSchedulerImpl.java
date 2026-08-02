@@ -927,6 +927,7 @@ public class JobSchedulerImpl extends ServiceSupport implements Runnable, JobSch
         private final int DEFAULT_WAIT = 500;
         private final int DEFAULT_NEW_JOB_WAIT = 100;
         private boolean newJob;
+        private boolean signaled;
         private long waitTime = DEFAULT_WAIT;
         private final Object mutex = new Object();
 
@@ -934,7 +935,9 @@ public class JobSchedulerImpl extends ServiceSupport implements Runnable, JobSch
          * @return the waitTime
          */
         long getWaitTime() {
-            return this.waitTime;
+            synchronized (mutex) {
+                return this.waitTime;
+            }
         }
 
         /**
@@ -942,34 +945,50 @@ public class JobSchedulerImpl extends ServiceSupport implements Runnable, JobSch
          *            the waitTime to set
          */
         void setWaitTime(long waitTime) {
-            if (!this.newJob) {
-                this.waitTime = waitTime > 0 ? waitTime : DEFAULT_WAIT;
-            }
-        }
-
-        void pause() {
             synchronized (mutex) {
-                try {
-                    mutex.wait(this.waitTime);
-                } catch (InterruptedException e) {
+                if (!this.newJob) {
+                    this.waitTime = waitTime > 0 ? waitTime : DEFAULT_WAIT;
                 }
             }
         }
 
-        void newJob() {
-            this.newJob = true;
-            this.waitTime = DEFAULT_NEW_JOB_WAIT;
-            wakeup();
+    void pause() {
+      synchronized (mutex) {
+        long expiry = System.currentTimeMillis() + this.waitTime;
+        long remaining = this.waitTime;
+        while (!signaled && remaining > 0) {
+          try {
+            mutex.wait(remaining);
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            break;
+          }
+          remaining = expiry - System.currentTimeMillis();
         }
+        signaled = false;
+      }
+    }
 
-        void clearNewJob() {
-            this.newJob = false;
-        }
+    void newJob() {
+      synchronized (mutex) {
+        this.newJob = true;
+        this.waitTime = DEFAULT_NEW_JOB_WAIT;
+        this.signaled = true;
+        mutex.notifyAll();
+      }
+    }
 
-        void wakeup() {
-            synchronized (this.mutex) {
-                mutex.notifyAll();
-            }
-        }
+    void clearNewJob() {
+      synchronized (mutex) {
+        this.newJob = false;
+      }
+    }
+
+    void wakeup() {
+      synchronized (this.mutex) {
+        this.signaled = true;
+        mutex.notifyAll();
+      }
+    }
     }
 }

@@ -671,8 +671,8 @@ public class Journal {
     private Runnable preAllocateNextDataFileTask = new Runnable() {
         @Override
         public void run() {
-            if (nextDataFile == null) {
-                synchronized (dataFileIdLock){
+            synchronized (dataFileIdLock) {
+                if (nextDataFile == null) {
                     try {
                         nextDataFile = newDataFile();
                     } catch (IOException e) {
@@ -736,6 +736,7 @@ public class Journal {
             if (!started) {
                 return;
             }
+            started = false;
             cleanupTask.cancel(true);
             if (preAllocateNextDataFileFuture != null) {
                 preAllocateNextDataFileFuture.cancel(true);
@@ -750,7 +751,6 @@ public class Journal {
             fileByFileMap.clear();
             dataFiles.clear();
             lastAppendLocation.set(null);
-            started = false;
         }
     }
 
