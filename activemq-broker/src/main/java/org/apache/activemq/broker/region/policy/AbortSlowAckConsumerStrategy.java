@@ -159,7 +159,8 @@ public class AbortSlowAckConsumerStrategy extends AbortSlowConsumerStrategy {
 
     private void abortAllQualifiedSlowConsumers() {
         HashMap<Subscription, SlowConsumerEntry> toAbort = new HashMap<Subscription, SlowConsumerEntry>();
-        for (Entry<Subscription, SlowConsumerEntry> entry : slowConsumers.entrySet()) {
+        for (Iterator<Entry<Subscription, SlowConsumerEntry>> iterator = slowConsumers.entrySet().iterator(); iterator.hasNext();) {
+            Entry<Subscription, SlowConsumerEntry> entry = iterator.next();
             if (getMaxSlowDuration() > 0 && (entry.getValue().markCount * getCheckPeriod() >= getMaxSlowDuration()) ||
                 getMaxSlowCount() > 0 && entry.getValue().slowCount >= getMaxSlowCount()) {
 
@@ -170,7 +171,7 @@ public class AbortSlowAckConsumerStrategy extends AbortSlowConsumerStrategy {
                         entry.getValue().getSlowCount());
 
                 toAbort.put(entry.getKey(), entry.getValue());
-                slowConsumers.remove(entry.getKey());
+                iterator.remove();
             } else {
 
                 LOG.trace("Not yet time to abort consumer {}: slow duration = {}, slow count = {}",

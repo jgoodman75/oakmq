@@ -232,9 +232,14 @@ public class ActiveMQQueueBrowser implements QueueBrowser, Enumeration {
      */
   protected void waitForMessage() {
     try {
+      ActiveMQMessageConsumer currentConsumer = consumer;
+      if (currentConsumer == null) {
+        return;
+      }
+
+      currentConsumer.sendPullCommand(-1);
       synchronized (semaphore) {
-        consumer.sendPullCommand(-1);
-        while (consumer.getMessageSize() == 0 && !browseDone.get() && session.isRunning()) {
+        while (currentConsumer == consumer && currentConsumer.getMessageSize() == 0 && !browseDone.get() && session.isRunning()) {
           semaphore.wait(2000);
         }
       }

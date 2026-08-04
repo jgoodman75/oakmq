@@ -351,7 +351,11 @@ public class SchedulerBroker extends BrokerFilter implements JobListener {
         }
         Object repeatValue = msg.getProperty(ScheduledMessage.AMQ_SCHEDULED_REPEAT);
         if (repeatValue != null) {
-            repeat = (Integer) TypeConversionSupport.convert(repeatValue, Integer.class);
+            Integer convertedRepeat = (Integer) TypeConversionSupport.convert(repeatValue, Integer.class);
+            if (convertedRepeat == null) {
+                throw new MessageFormatException("Invalid scheduled repeat value: " + repeatValue);
+            }
+            repeat = convertedRepeat;
             if (repeat > maxRepeatAllowed) {
                 throw new MessageFormatException("The scheduled repeat value is too large");
             }
@@ -375,7 +379,11 @@ public class SchedulerBroker extends BrokerFilter implements JobListener {
             String cronStr = cronValue != null ? cronValue.toString() : null;
             int repeat = 0;
             if (repeatValue != null) {
-                repeat = (Integer) TypeConversionSupport.convert(repeatValue, Integer.class);
+                Integer convertedRepeat = (Integer) TypeConversionSupport.convert(repeatValue, Integer.class);
+                if (convertedRepeat == null) {
+                    throw new MessageFormatException("Invalid scheduled repeat value: " + repeatValue);
+                }
+                repeat = convertedRepeat;
                 if (repeat > maxRepeatAllowed) {
                     throw new MessageFormatException("The scheduled repeat value is too large");
                 }

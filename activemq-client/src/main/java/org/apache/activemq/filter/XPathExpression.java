@@ -110,8 +110,8 @@ public final class XPathExpression implements BooleanExpression {
         List<String> features = new ArrayList<String>();
         for (Map.Entry<Object, Object> prop : properties.entrySet()) {
             String key = (String) prop.getKey();
-            if (key.startsWith(DOCUMENT_BUILDER_FACTORY_FEATURE)) {
-                String uri = key.split(DOCUMENT_BUILDER_FACTORY_FEATURE + ":")[1];
+            if (key.startsWith(DOCUMENT_BUILDER_FACTORY_FEATURE + ":")) {
+                String uri = key.substring(DOCUMENT_BUILDER_FACTORY_FEATURE.length() + 1);
                 Boolean value = Boolean.valueOf((String)prop.getValue());
                 try {
                     factory.setFeature(uri, value);

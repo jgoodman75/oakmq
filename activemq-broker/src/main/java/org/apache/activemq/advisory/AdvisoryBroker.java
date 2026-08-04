@@ -786,10 +786,11 @@ public class AdvisoryBroker extends BrokerFilter {
 
                                     //check consumers created for the existence of a destination to see if they
                                     //match the consumerinfo and clean up
-                                    for (VirtualConsumerPair activeMQDest : brokerConsumerDests.keySet()) {
-                                        ConsumerInfo i = brokerConsumerDests.get(activeMQDest);
-                                        if (info.equals(i) && brokerConsumerDests.remove(activeMQDest) != null) {
-                                            LOG.debug("Virtual consumer pair removed: {} for consumer: {} ", activeMQDest, i);
+                                    for (Iterator<Map.Entry<VirtualConsumerPair, ConsumerInfo>> iterator = brokerConsumerDests.entrySet().iterator(); iterator.hasNext();) {
+                                        Map.Entry<VirtualConsumerPair, ConsumerInfo> entry = iterator.next();
+                                        if (info.equals(entry.getValue())) {
+                                            iterator.remove();
+                                            LOG.debug("Virtual consumer pair removed: {} for consumer: {} ", entry.getKey(), entry.getValue());
                                         }
                                     }
                                 }

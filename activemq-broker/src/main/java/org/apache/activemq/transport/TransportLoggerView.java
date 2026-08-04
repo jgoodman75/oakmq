@@ -73,7 +73,9 @@ public class TransportLoggerView implements TransportLoggerViewMBean {
         this.name = this.createTransportLoggerObjectName();
         
         TransportLoggerView.transportLoggerViews.add(this);
-        this.register();
+        if (this.name != null) {
+            this.register();
+        }
     }
     
     /**

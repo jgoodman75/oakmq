@@ -18,6 +18,7 @@ package org.apache.activemq.broker.region.policy;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -94,12 +95,12 @@ public class AbortSlowConsumerStrategy implements SlowConsumerStrategy, Runnable
         }
 
         HashMap<Subscription, SlowConsumerEntry> toAbort = new HashMap<Subscription, SlowConsumerEntry>();
-        for (Entry<Subscription, SlowConsumerEntry> entry : slowConsumers.entrySet()) {
+        for (Iterator<Entry<Subscription, SlowConsumerEntry>> iterator = slowConsumers.entrySet().iterator(); iterator.hasNext();) {
+            Entry<Subscription, SlowConsumerEntry> entry = iterator.next();
             Subscription subscription = entry.getKey();
             if (isIgnoreNetworkSubscriptions() && subscription.getConsumerInfo().isNetworkSubscription()) {
-                if (slowConsumers.remove(subscription) != null) {
-                    LOG.info("network sub: {} is no longer slow", subscription.getConsumerInfo().getConsumerId());
-                }
+                iterator.remove();
+                LOG.info("network sub: {} is no longer slow", subscription.getConsumerInfo().getConsumerId());
                 continue;
             }
 
@@ -107,11 +108,11 @@ public class AbortSlowConsumerStrategy implements SlowConsumerStrategy, Runnable
                 if (maxSlowDuration > 0 && (entry.getValue().markCount * checkPeriod >= maxSlowDuration)
                         || maxSlowCount > 0 && entry.getValue().slowCount >= maxSlowCount) {
                     toAbort.put(entry.getKey(), entry.getValue());
-                    slowConsumers.remove(entry.getKey());
+                    iterator.remove();
                 }
             } else {
                 LOG.info("sub: {} is no longer slow", entry.getKey().getConsumerInfo().getConsumerId());
-                slowConsumers.remove(entry.getKey());
+                iterator.remove();
             }
         }
 

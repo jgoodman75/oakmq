@@ -496,7 +496,10 @@ public class MulticastDiscoveryAgent implements DiscoveryAgent, Runnable {
         for (Iterator<RemoteBrokerData> i = brokersByService.values().iterator(); i.hasNext();) {
             RemoteBrokerData data = i.next();
             if (data.getLastHeartBeat() < expireTime) {
-                processDead(data.getServiceName());
+                i.remove();
+                if (!data.isFailed()) {
+                    fireServiceRemovedEvent(data);
+                }
             }
         }
     }
